@@ -18,16 +18,16 @@ NB I receive no financial, or any other benefits from promoting Oregon Scientifi
 
 Rob
 
-Intial upload of Arduino+433MHz Rx base station routines:
+Initial upload of Arduino+433MHz Rx base station routines:
 
 Raw (grabs Manchester encoded data, 8bytes)
 
-Debugger (get Machester encoded data, variable packet length)
+Debugger (get Manchester encoded data, variable packet length)
 
 DebugVersion_16_NextStep (Decodes Oregon Scientific sensors to human readable format)
 
 Final (gets data from Oregon Scientific Weather sensors and decodes them)
 
-Transmitter9 (sends temp to Arduino Base using protocol similar to OS)
+Transmitter9 (sends temp to Arduino Base using protocol similar to OS (NB Not OS compatible)
 
 
