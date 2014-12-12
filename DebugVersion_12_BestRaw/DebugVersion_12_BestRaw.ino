@@ -15,7 +15,7 @@
  Discard the zero (and any other bits) if required (currently included in bytes)
  Any number of bytes (Currently set to 8)
  
- What is does not do:
+ What it does not do:
  Is any error checking of data
  Any processing of data (eg reversal of significance within nibbles)
  Calculations to change the data into human redable form.
@@ -62,7 +62,7 @@ void setup() {
   Serial.begin(115200);
   pinMode(RxPin, INPUT);
   pinMode(ledPin, OUTPUT);
-  Serial.println("Debug Manchester Version 12 Raw");
+  Serial.println("Debug Manchester Version 12 - Raw bits in an 8 byte packet");
   Serial.print("Using a delay of 1/4 bitWaveform ");
   Serial.print(sDelay,DEC);
   Serial.print(" uSecs 1/2 bitWaveform ");

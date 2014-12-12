@@ -1,4 +1,4 @@
-Scientific Weather station WMR86 using a 433MHx receiver and an Arduino Uno.
+*Scientific Weather station WMR86 using a 433MHx receiver and an Arduino Uno.*
 
 The concept is presented in three stages where the first program simply captures and displays samples of the sensors' raw
 packet data from the sensors.  The second version further decodes the OS protocol and captures the three main types of
@@ -14,7 +14,7 @@ the repetition in the code and come up with one unified algorithm.  It may be us
 
 One of the drawbacks of not building one's own weather station is that using a commercial station usually means
 being stuck with what ever they offer as extra sensors or functions in their consoles.  The power of the Arduino
-is drawn on here to also be able to build OS compatible sensors.  The code to generate Manchester encoding is much
+is drawn on here to also be able to build OS style sensors.  The code to generate Manchester encoding is much
 simpler than receiving it.  A program is shown here that sends off an OS protocol compatible signal and allows the
 Arduino receiver to decode it quite easily, alongside the other OS signals it is getting.  It means that novel sensors
 can be added to the system and expand it well beyond a simple weather station. The example provided is of a
@@ -40,5 +40,14 @@ If you have an Arduino project that looks as though weather conditions may be a 
 recommend buying an Oregon Scientific weather station (I used the WMR86 protocol V3.0) as a great start.  These
 programs are not just compile run and sit back, but are offered to serious experimenters who can program and build
 on other people's ideas.  If you are inspired by these programs to do something exciting please let me know.
+NB I receive no financial, or any other benefits from promoting Oregon Scientific equipment.
 
 Rob
+
+Intial upload of Arduino+433MHz Rx base station routines:
+Raw (grabs Manchester encoded data, 8bytes)
+Debugger (get Machester encoded data, variable packet length)
+DebugVersion_16_NextStep (Decodes Oregon Scientific sensors to human readable format)
+Final (gets data from Oregon Scientific Weather sensors and decodes them)
+Transmitter9 (sends temp to Arduino Base using protocol similar to OS)
+
