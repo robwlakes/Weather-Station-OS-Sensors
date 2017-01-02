@@ -1,0 +1,12 @@
+My Own GIT-Hub notes
+
+
+To push changes up to my site
+
+Use GitG to stage the changes into my on-disk repository.
+
+Open a terminal in the GIT-Hub folder and type
+
+ git push origin master
+
+Then supply my user name and passsword.
