@@ -6,7 +6,7 @@
  Visit https://github.com/robwlakes/ArduinoWeatherOS for the latest version and
  documentation. Filename: MainWeather_02.ino
 
- Main_Version_20, 12 August 2015  (works with Python Version 29)
+ Main_Weather, 10 July 2016  (works with Python Version 30)
 
  The aim of this version is use the new Manchester decoding routine and incorporate detection
  of a Oregon compatible sensor built to cover novel environmental sensors.
@@ -70,15 +70,28 @@
  I can now have my LCD Home Base in the kitchen to enjoy, with the Arduino in the garage also
  capturing data for WWW Weather pages.  Lovely!!!!  http://www.oregonscientific.com
  Very Highly recommended equipment. Rob Ward
- */
 
+ The Oregon Scientific UV Detector UVN-800 has been added into to this code as a sensor.
+ It appears to have power problems and does not seem to connect as easy as the other sensors.
+ However I was foreced to buy it as I could not find a UV transparent material for a window
+ to use a cheaper Adafruit sensor (Analog UV Light Sensor Breakout-GUVA-S12SD).  Otherwise
+ I was not able to protect the circuit.
+ SI1145 Digital UV Index / IR / Visible Light Sensor could also be useful as it reports SPI 
+ and can actually give predicted UV levels by measuring Visible light and IR.
+
+ Special thanks to Darko in Italy who corrected an error when decoding negative temperatures. Grazie ragazzi!!!
+ 
+ The Future:
+ The Solar Power sensor (a silicon cell's open voltage under sunlight) has been added
+ A lightning strike detector has been added with nos of strikes per 45 seconds
+  */
 
 #include "DHT.h"
 #include <Wire.h>
 #include <Adafruit_BMP085.h>
 
-#define DHTTYPE DHT22   // DHT 22  (AM2302)
-#define DHTPIN 2     // what pin we're connected to
+#define DHTTYPE DHT22        // DHT 22  (AM2302)
+#define DHTPIN 2             // what pin we're connected to
 
 Adafruit_BMP085 bmp;
 DHT dht(DHTPIN, DHTTYPE);
@@ -108,47 +121,52 @@ byte    nosBits    = 0;      //Counts to 8 bits within a dataByte
 byte    maxBytes   = 9;      //Set the bytes collected after each header. NB if set too high, any end noise will cause an error
 byte    nosBytes   = 0;      //Counter stays within 0 -> maxBytes
 //Bank array for packet (at least one will be needed)
-byte    manchester[12];        //Stores manchester pattern decoded on the fly
+byte    manchester[12];      //Stores manchester pattern decoded on the fly
 //Oregon bit pattern, causes nibble rotation to the right, ABCDabcd becomes DCBAdcba
 byte    oregon[]   = {
   16, 32, 64, 128, 1, 2, 4, 8
 };
-byte    csIndex    = 0;           //counter for nibbles needed for checksum
+byte    csIndex       = 0;   //counter for nibbles needed for checksum
 //Weather Variables
-byte    quadrant   = 0;       //used to look up 16 positions around the compass rose
-double  avWindspeed = 0.0;
-double  gustWindspeed = 0.0; //now used for general anemometer readings rather than avWinspeed
-float   rainTotal = 0.0;
-float   rainRate  = 0.0;
-double  temperature = 0.0;
-int     humidity  = 0;
-double  intTemp;
-double  intHumi;
-double  intPres;
-int     sensor0 = 0; //eg 0-99% light sensor form a Silicon Cell
-double  sensor1 = 0; //eg 25.3 degC temp sensor for lake temp
+byte    quadrant      = 0;   //used to look up 16 positions around the compass rose
+double  avWindspeed   = 0.0;
+double  gustWindspeed = 0.0; //now used for general anemometer readings rather than avWindspeed
+float   rainTotal     = 0.0;
+float   rainRate      = 0.0;
+double  temperature   = 0.0;
+int     humidity      = 0;
+double  intTemp       = 0;
+double  intHumi       = 0;
+double  intPres       = 0;
+byte    intSolar      = 0;   //eg Solar power
+byte    intLightning  = 0;   //eg Lightning Strikes
+byte    intUV         = 0;   //eg UV Light Levels
 const char windDir[16][4] = {
   "N  ", "NNE", "NE ", "ENE",  "E  ", "ESE", "SE ", "SSE",  "S  ", "SSW", "SW ", "WSW",  "W  ", "WNW", "NW ", "NNW"
 };
 
-byte    scan      = 0; // &7!=0 means that all three sensors has been detected, so it reports all three with meaningful figures first up
+byte    scan      = 0; // &7!=0 means that all three sensors has been detected, so it reports all three with meaningful figures first up (not the latest addition though)
 byte  seconds     = 0; // Counter to trigger the 60 seconds worth of data.
-byte  batStat     = 0; // bit1= temp, bit2=wind bit3=rain, if true then that sensor has not been logged for 20 minutes, battery probably getting flat
+byte  batStat     = 0; // bit1= temp, bit2=wind bit3=rain, bit4=exp if true then that sensor has not been logged for 20 minutes, its battery probably getting flat
 byte  logTemp     = 0; // Counter for number of minutes a sensor reading is missed
 byte  logWind     = 0; // Counter for number of minutes a sensor reading is missed
-byte  logRain     =.0; // Counter for number of minutes a sensor reading is missed
+byte  logRain     = 0; // Counter for number of minutes a sensor reading is missed
+byte  logUV       = 0; // Counter for number of minutes a sensor reading is missed
+byte  logExp      = 0; // Counter for number of minutes a sensor reading is missed
+int   aday        = 0; // Counts the number of minutes in a day and clears battery status every 24hrs
 
 void setup() {
   Serial.begin(115200);
   pinMode(RxPin, INPUT);
   pinMode(ledPin, OUTPUT);
-  //Strobe colours in to indicate a reboot, TriColour LED is Common Cathode, so requires active High to trigger.
+  //Strobe colours in to indicate a reboot, TriColour LED is Common Anode, so requires active low to trigger.
   pinMode(RedPin, OUTPUT);
   pinMode(GrePin, OUTPUT);
   pinMode(BluPin, OUTPUT);
+  //make the RGB LED flash a signature heartbeat on start up 
   digitalWrite(RedPin, 1);
   digitalWrite(GrePin, 0);
-  digitalWrite(BluPin, 1);  //Flash Cyan
+  digitalWrite(BluPin, 0);  //Flash Cyan
   delay(1000);
   digitalWrite(RedPin, 0);
   digitalWrite(GrePin, 0);  //Flash Yellow
@@ -158,10 +176,11 @@ void setup() {
   digitalWrite(GrePin, 1);
   digitalWrite(BluPin, 0);  //Flash Purple
   delay(1000);
-  digitalWrite(BluPin, 1);
+  digitalWrite(BluPin, 1);  //all off
   digitalWrite(RedPin, 1);
-
-  /*  Enable these if attempting to debug the program or the circuit
+  delay(1000);
+  /*
+  //  Enable these if attempting to debug the program or the circuit
   Serial.println("Debug Manchester Version 18");
   Serial.print("Using a delay of 1/4 bitWaveform ");
   Serial.print(sDelay,DEC);
@@ -295,9 +314,13 @@ void add(byte bitData) {
       maxBytes = 9; //temp
       csIndex = 16;
     }
+   if (manchester[0] == 0xAD) {
+      maxBytes = 8; //UV Light Detector
+      csIndex = 14; //CS byte begins at 14 nibble
+    }
     if (manchester[0] == 0xA3) {
-      maxBytes = 10; //experimental, 9 data bytes and 1 byte CS [0]-[9]
-      csIndex = 18; //CS byte begins 18 nibble
+      maxBytes = 10; //experimental, Solar,Strikes,UV
+      csIndex = 18; //CS byte begins at 18 nibble
     }
     nosBits++;
     //Pack the bits into 8bit bytes
@@ -399,7 +422,7 @@ byte nyb(int nybble) {
 void analyseData() {
   if (manchester[0] == 0xaf) { //detected the Thermometer and Hygrometer (every 53seconds)
     scan = scan | 1;
-    logTemp = 0;
+    logTemp = 0; //reset missing reads to zero
     thermom();
     //dumpThermom();
     digitalWrite(RedPin, 0);     //Temperature is Red
@@ -409,7 +432,7 @@ void analyseData() {
   }
   if (manchester[0] == 0xa1) { //detected the Anemometer and Wind Direction (every 14seconds)
     scan = scan | 2;
-    logWind = 0;
+    logWind = 0;//reset missing reads to zero
     anemom();
     //dumpAnemom();
     digitalWrite(RedPin, 1);
@@ -418,27 +441,36 @@ void analyseData() {
   }
   if (manchester[0] == 0xa2) { //detected the Rain Gauge (every 47seconds)
     scan = scan | 4;
-    logRain = 0;
+    logRain = 0;//reset missing reads to zero
     rain();
     //dumpRain();
     digitalWrite(RedPin, 1);
     digitalWrite(GrePin, 1);
     digitalWrite(BluPin, 0);   //Rain is Blue
   }
-  if (manchester[0] == 0xa3) { //detected an original Sensor designed by Us!!!
-    //scan = scan | 8; //Don't use this unless it is intended the whole thing waits for it!!
+  if (manchester[0] == 0xad) { //detected the UV Light Sensor (every 73seconds)
+    scan = scan | 8; //not checked at the moment
+    logUV = 0;//reset missing reads to zero
+    UV();
+    //dumpUV();
+    digitalWrite(RedPin, 0);
+    digitalWrite(GrePin, 0);
+    digitalWrite(BluPin, 1);   //UV is Yellow
+  }
+  if (manchester[0] == 0xa3) { //detected an original Sensor designed by Us every 45 seconds!!!
     //totally experimental
+    scan = scan | 8;  //not checked at the moment
+    logExp=0;//reset missing reads to zero
     totExp();
-    //dumpExp();
     //This code is not used by the three sensors in the WMR86 product. It may clash with other
     //other OS Sensors and a different value chosen in the Tx and then Rx
     digitalWrite(RedPin, 0);
     digitalWrite(GrePin, 1);
-    digitalWrite(BluPin, 0);
+    digitalWrite(BluPin, 0); //Experimental is Purple!!! or Magenta???
 
   }
   //Serial.println(scan,DEC);
-
+  eraseManchester();
 }
 
 //Calculation Routines
@@ -485,9 +517,9 @@ void analyseData() {
  Over the last 6 months this has proved to be Ok
  */
 void rain() {
-  rainTotal = float(((nyb(18) * 100000) + (nyb(17) * 10000) + (nyb(16) * 1000) + (nyb(15) * 100) + (nyb(14) * 10) + nyb(13)) * 25 / 1000.0);
+  rainTotal = float(((nyb(18) * 100000) + (nyb(17) * 10000) + (nyb(16) * 1000) + (nyb(15) * 100) + (nyb(14) * 10) + nyb(13)) * 25) / 1000.0;
   //Serial.println((nyb(18)*100000)+(nyb(17)*10000)+(nyb(16)*1000)+(nyb(15)*100)+(nyb(14)*10)+nyb(13),DEC);
-  rainRate = float(((nyb(8) * 10000) + (nyb(9) * 1000) + (nyb(10) * 100) + (nyb(11) * 10) + nyb(12)) * 25 / 1000.0);
+  rainRate = float(((nyb(8) * 10000) + (nyb(9) * 1000) + (nyb(10) * 100) + (nyb(11) * 10) + nyb(12)) * 25) / 1000.0;
   //Serial.println((nyb(8)*10000)+(nyb(9)*1000)+(nyb(10)*100)+(nyb(11)*10)+nyb(12),DEC);
 }
 void dumpRain() {
@@ -498,6 +530,20 @@ void dumpRain() {
   Serial.print(rainRate);
   Serial.println(" mm/hr ");
 }
+
+//UVN800 UV Light Sensor
+// D AD 10101101 87 10000111 41 01000001 AB 10101011 00 00000000 00 00000000 70 01110000 D3 11010011
+// D AD 10101101 87 10000111 41 01000001 AB 10101011 00 00000000 0A 00001010 70 01110000 74 01110100
+
+void UV() {
+  //maximum readings appear ot be about 130-140 units (not sure how they rate them)
+  intUV = int((nyb(9)*16)+nyb(11));
+}
+void dumpUV() {
+  Serial.print("UV Level ");
+  Serial.println(intUV);
+}
+
 
 // WGR800 Wind speed sensor
 // Sample Data:
@@ -557,8 +603,9 @@ void dumpAnemom() {
 // D AF 82 41 CB 89 42 00 48 85 55    Real example
 // Temperature 24.9799995422 degC Humidity 40.0000000000 % rel
 void thermom() {
-  temperature = (double)((nyb(11) * 100) + (nyb(10) * 10) + nyb(9)) / 10; //accuracy to 0.01 degree seems unlikely
-  if (nyb(12) == 1) { //  Trigger a negative temperature
+  temperature = (double)((nyb(11) * 100) + (nyb(10) * 10) + nyb(9)) / 10; //accuracy to 0.1 degree seems unlikely
+  //The following line has been corrected by Darko in Italy, thank you, Grazie ragazzi!!!
+  if (nyb(12) == 8) { //  Trigger a negative temperature
     temperature = -1.0 * temperature;
   }
   humidity = (nyb(14) * 10) + nyb(13);
@@ -572,19 +619,16 @@ void dumpThermom() {
 }
 //The novel added extra sensors, extracting and applying any necessary conversions
 void totExp() {
-  sensor0 = int(manchester[2]); //EG To apply a Solar Cell to the input?
-  sensor1 = float((manchester[4]<<8) + manchester[3])/16; //EG To apply to a Lake temperature? Dallas DS18B20 raw byte data
+  //No complicated conversions required here
+  intSolar = byte(manchester[2]);     //EG To apply a Solar Cell to the input?
+  intLightning = byte(manchester[3]); //EG Lightning Strikes
 }
 
 void dumpExp() {
-  Serial.print("Solar Percentage =");
-  Serial.println(sensor0, DEC);
-  Serial.print("Lake Temperature =");
-  Serial.println(sensor1, DEC);
-  Serial.print("Incrementing ");   //When testing the Tx, these were made to change every transmission to check reception
-  Serial.print(manchester[5], DEC);
-  Serial.print(", Decrementing ");
-  Serial.println(manchester[6], DEC);
+  Serial.print("Solar Power =");
+  Serial.println(intSolar, DEC);
+  Serial.print("Lightning Strikes =");
+  Serial.println(intLightning, DEC);
 }
 
 // Formating routine for interface to host computer, output once a minute once all three sesnors have been detected
@@ -593,48 +637,71 @@ void usbData() {
   intHumi = (double)dht.readHumidity();      //DHT22 readings %Humidity
   intTemp = (double)bmp.readTemperature();   //internal temperature
   intPres = (double)bmp.readPressure() / 100.0; //Pa reduced to mBar
-  if ((scan&7)==7) {   //scan==7 means all readings now have a valid value, output on Serial is no OK
-    Serial.print(sensor0,DEC);       //A reading from the original design for an Oregon style sensor (int)
-    Serial.print(",");
-    Serial.print(sensor1,1);         //A reading from the original design for an Oregon style sensor (float)
+  //leave this check at 7 until the other readings are stabilized
+  if ((scan&7)==7) {               //scan==15 means all 4 readings now have a valid value, ready for output on Serial
+    //Battery/Signal status, OR in the the four status values for the signal connections.
+    logTemp++;
+    if (logTemp>40){
+      batStat = batStat | 1;
+      }
+    logWind++;
+    if (logWind>40){
+      batStat = batStat | 2;
+      }
+    logRain++;
+    if (logRain>40){
+      batStat = batStat | 4;
+      }
+    logUV++;
+    if (logUV>40){
+      batStat = batStat | 8;
+      }
+    logExp++;
+    if (logExp>40){
+      batStat = batStat | 16;
+      }
+    //reset the batStat to 0 every 24hours
+    aday++;
+    if (aday>1440){
+      batStat=0;
+      aday=0;
+      }
+    // Order: Battery Status, Quadrant, Wind Gust, Rainfall, Temperature, InternalTemp, Internal Pressure, Int Humidity, Solar Power, Lightning, UV Radiation
+    Serial.print(batStat,DEC);       //Send out the number to indicate if a sensor is not transmitting for maore than 20 mins. Low Battery or other damage.
     Serial.print(",");
     Serial.print(quadrant);          //0-15 in 22.5 degrees steps clockwise
     Serial.print(",");
     Serial.print(gustWindspeed, 1);  //Gust windspeed km/hr, not average windspeed (graphing over 10 samples gives Average)
     Serial.print(",");
-    gustWindspeed = avWindspeed;      //reset gust to average, then take the larger next reading
+    gustWindspeed = avWindspeed;     //reset gust to average, then take the larger next reading
     Serial.print(rainTotal, 1);      //currently considered to checked for a good calibration to mm
     Serial.print(",");
     Serial.print(temperature, 2);    // OS Temperature Centigrade
     Serial.print(",");
-    //The following two sensors are to be added but for simplicity sake they are not included in this version.
-    //Only the preset globals are reported here, ie zeroes!!!
     Serial.print(intTemp, 2);        //BMP085 temperature (used for compensation reading) Centigrade
     Serial.print(",");
     Serial.print(intPres, 2);        //BMP085 pressure reading milli-bars
     Serial.print(",");
     Serial.print(intHumi);           //Digital DHT22 seems better than the OS in Temp/Hum sensor % relative
-    //Battery/Signal status 
-    logTemp++;
-    if (logTemp>20){
-      batStat = batStat | 1;
-    }
-    logWind++;
-    if (logWind>20){
-      batStat = batStat | 2;
-    }
-    logRain++;
-    if (logRain>20){
-      batStat = batStat | 4;
-    }
     Serial.print(",");
-    Serial.print(batStat,DEC);           //Send out the number to indicate if a sensor is not transmitting for maore than 20 mins. Low Battery or other damage.
+    Serial.print(intSolar,DEC);       //A reading from experimental Solar Power sensor
+    Serial.print(",");
+    Serial.print(intLightning,DEC);       //A reading from the nos of Lightning Strikes
+    Serial.print(",");
+    Serial.print(intUV, DEC);      //UV Sensor
     Serial.println();
-    digitalWrite(RedPin, 0);              //White, all colours on, data has been logged to the Server
+        
+    //Indicate the transmission of this one second data with a white light set up R+B+G!!
+    digitalWrite(RedPin, 0);         //White, all colours on, data has been logged to the Server
     digitalWrite(GrePin, 0);
     digitalWrite(BluPin, 0);
+  }
+}
 
-    }
+void eraseManchester(){
+  for( int i=0; i < 15; i++){ 
+    manchester[i]=0;
+  }
 }
 
 

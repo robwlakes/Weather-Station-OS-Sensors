@@ -10,3 +10,26 @@ Open a terminal in the GIT-Hub folder and type
  git push origin master
 
 Then supply my user name and passsword.
+
+Will add a new file to the index to be committed:
+
+  git add <filename.any>
+
+then
+
+  commit
+
+to send the file up to the server. Add in comments to explain the commit
+and put alterations into perspective.
+
+
+Also default editor, username and emails can be set as well
+
+  GIT-Hub$ git config --global user.email rl.ward@bigpond.com 
+  GIT-Hub$ git config --global user.name Rob Ward
+  GIT-Hub$ git config --global core.editor geany
+
+Also
+
+  git status
+  git log
