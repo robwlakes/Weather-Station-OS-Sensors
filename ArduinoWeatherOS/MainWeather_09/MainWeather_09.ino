@@ -4,9 +4,9 @@
  This example code is in the public domain.
  Use at your own risk, I will take no responsibility for any loss whatsoever for its deployment.
  Visit https://github.com/robwlakes/ArduinoWeatherOS for the latest version and
- documentation. Filename: MainWeather_02.ino
+ documentation. Filename: MainWeather_09.ino
 
- Main_Weather, 10 July 2016  (works with Python Version 30)
+ Main_Weather, 24 Dec 2017  (works with Protocol Version 3.0)
 
  The aim of this version is use the new Manchester decoding routine and incorporate detection
  of a Oregon compatible sensor built to cover novel environmental sensors.
