@@ -22,13 +22,12 @@ A Chinese engraving machine (about $250 Australian)
   * Plus other bits and pieces to make it work. eg Backlash nuts
   * 1 240V-12V 1A laptop style power supply
   * 1 240V-24V 1A laptop power supply (not used).
-
-Plus...
-  * 0.1mm 30degree engraving tools
-  * 0.9mm drill bits
-  * 1 5mm Diam CNC tool chuck with collets
-  * 2mm milling bit
-  * Any extra hardware is detailed in the document eg wires and switches etc
+  * Plus...
+    * 0.1mm 30degree engraving tools
+    * 0.9mm drill bits
+    * 1 5mm Diam CNC tool chuck with collets
+    * 2mm milling bit
+    * Any extra hardware is detailed in the document eg wires and switches etc
   
 The following software:
   * Eagle PCB software (used within the licence for free, )
@@ -49,7 +48,7 @@ I initially found that this project was really daunting, as there were so many g
 
 The engraving machine can be used for light weight milling jobs. However it is essentially an engraving machine with some milling capacity.  The way the Spindle is mounted on the Z-Axis and that is mounted on the X-Axis projects the milling tool quite a wayout in front of the two X-Axis gantry rods.  This gives considerable leaverage on that system and not being able to gain enough force to ensure the milling tools are held firmly against the object to guarantee the cut will be as accurate as possible.
       
-Forunately for PCBs the engraving tools need to be the most accurate, and the pressure required for success here is much smaller. The holes drilling and outline milling are all through the thickness of the board so just reducing the final milling the shape of the board with a 2mm bit can be done in 0.2mm steps rather than say 0.5mm steps. It takes longer but less likely to snap a tool or force an inaccurate cut.
+Fortunately for PCBs the engraving tools need to be the most accurate, and the pressure required for success here is much smaller. The holes drilling and outline milling are all through the thickness of the board so just reducing the final milling the shape of the board with a 2mm bit can be done in 0.2mm steps rather than say 0.5mm steps. It takes longer but less likely to snap a tool or force an inaccurate cut.
 
 Working out the Auto Level in ChiliPeppr also meant figuring out how to use the A5Pin Probe in GRBL and how to minimise false limit triggering from random RF pulses.
 
