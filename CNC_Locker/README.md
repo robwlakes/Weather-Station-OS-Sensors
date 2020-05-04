@@ -12,52 +12,30 @@ This document has been prepared to assist newcomers to PCB milling, indeed any s
 
 The following hardware was used:
 
-*A Chinese engraving machine (about $250 Australian)
-
-  *3 Nema 17 style motors, 3 8mm 2 thread lead screws with flexible connectors and end thrust bearings.
+A Chinese engraving machine (about $250 Australian)
+  ** 3 Nema 17 style motors, 3 8mm 2 thread lead screws with flexible connectors and end thrust bearings.
+  ** 12-24V Spindle DC Motor
+  ** 20-20 Aluminium frame with bolts, motor mounts and right angle connectors
+  ** 200mmx120mm Aluminium bed
+  ** An Arduino Uno V3 (GRBL Pre-loaded, but old version)
+  ** A Protoneer CNC Arduino shield V3.0
+  ** Plus other bits and pieces to make it work. eg Backlash nuts
+  ** 1 240V-12V 1A laptop style power supply
+  ** 1 240V-24V 1A laptop power supply (not used).
+  * 0.1mm 30degree engraving tools
+  * 0.9mm drill bits
+  * 1 5mm Diam CNC tool chuck with collets
+  * 2mm milling bit
+  * Any extra hardware is detailed in the document eg wires and switches etc
   
-  *12-24V Spindle DC Motor
-  
-  *20-20 Aluminium frame with bolts, motor mounts and right angle connectors
-  
-  *200mmx120mm Aluminium bed
-  
-  *An Arduino Uno V3 (GRBL Pre-loaded, but old version)
-  
-  *A Protoneer CNC Arduino shield V3.0
-  
-  *Plus other bits and pieces to make it work. eg Backlash nuts
-  
-  *1 240V-12V 1A laptop style power supply
-  
-  *1 240V-24V 1A laptop power supply (not used).
-  
-  *1 5mm Diam CNC tool chuck with collets
-  
-  *0.1mm 30degree engraving tools
-  
-  *0.9mm drill bits
-  
-  *2mm milling bit
-  
-  *Any extra hardware is detailed in the document eg wires and switches etc
-  
-*The following software:
-
-  *Eagle PCB software (used within the licence for free, )
-  
-  *GRBL 1.1h
-  
-  *Serial Port json-server 1.96
-  
-  *ChiliPeppr Workspace (www.chilipeppr/workspace/jpadier/)
-  
-  *Arduino IDE arduino-1.8.4
-  
-  *Chrome Web Browser (Version 81.0.4044.122)
-  
-  *Ubuntu Mate 18.04
-  
+The following software:
+  * Eagle PCB software (used within the licence for free, )
+  * GRBL 1.1h
+  * Serial Port json-server 1.96
+  * ChiliPeppr Workspace (www.chilipeppr/workspace/jpadier/)
+  * Arduino IDE arduino-1.8.4
+  * Chrome Web Browser (Version 81.0.4044.122)
+  * Ubuntu Mate 18.04
 
 ## Skills
 
