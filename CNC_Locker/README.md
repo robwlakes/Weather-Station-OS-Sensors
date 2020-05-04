@@ -1,4 +1,4 @@
-# ChiliPeppr and GRBL V0.1
+# ChiliPeppr and GRBL V1.1h
 
 ## Overview
 
